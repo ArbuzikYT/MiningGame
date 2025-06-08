@@ -1,1 +1,1239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Майнинг Ферма</title>
+  <script src="https://yandex.ru/games/sdk/v2"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: #1e1e1e;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .save-reset-buttons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 10px;
+      z-index: 999;
+    }
+    .save-btn,
+    .reset-btn {
+      width: 90px;
+      height: 36px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .save-btn {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      color: white;
+    }
+    .reset-btn {
+      background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+      color: white;
+    }
+    .save-btn:hover,
+    .reset-btn:hover {
+      box-shadow: 0 0 10px rgba(98, 126, 234, 0.5);
+    }
+    .save-btn:active,
+    .reset-btn:active {
+      transform: scale(0.95);
+    }
+    .header {
+      padding: 15px;
+      text-align: center;
+      background: linear-gradient(135deg, #2a3a4b 0%, #1a1a2e 100%);
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .header p {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 15px;
+      background-color: #252525;
+      margin: 10px;
+      border-radius: 12px;
+    }
+    .stat-item {
+      background-color: #333;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .device-section {
+      text-align: center;
+      padding: 20px 15px;
+      margin: 10px;
+      background-color: #252525;
+      border-radius: 12px;
+    }
+    .device-image {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 10px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: drop-shadow(0 0 10px rgba(100, 149, 237, 0.5));
+    }
+    .phone-2 {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23627eea"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/></svg>');
+    }
+    .phone-3 {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFD700"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/></svg>');
+    }
+    .pc {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23627eea"><path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>');
+    }
+    .no-icon {
+      visibility: hidden;
+      width: 36px;
+      height: 36px;
+    }
+    .device-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .device-hashrate {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-bottom: 10px;
+    }
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background-color: #333;
+      border-radius: 3px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #627eea, #7b5be6);
+      width: 100%;
+      transition: width 0.3s;
+    }
+    .mining-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .mining-btn {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .mining-btn:active {
+      transform: scale(0.95);
+    }
+    .mining-btn.stop {
+      background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+    }
+    .mining-btn:hover {
+      box-shadow: 0 0 10px rgba(98, 126, 234, 0.5);
+    }
+    .mining-btn.stop:hover {
+      box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+    }
+    .shop,
+    .devices {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px 15px;
+      margin: 10px;
+      background-color: #252525;
+      border-radius: 12px;
+      max-height: 300px;
+    }
+    .shop h2,
+    .devices h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #333;
+    }
+    .shop-item,
+    .device-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+    .shop-item-icon {
+      width: 36px;
+      height: 36px;
+      margin-right: 10px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    .shop-item-info,
+    .device-info {
+      flex-grow: 1;
+    }
+    .shop-item-name,
+    .device-name {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+    .shop-item-desc,
+    .device-hashrate {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+    .shop-item-price {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f0b90b;
+      margin-left: 10px;
+    }
+    .buy-btn {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      border: none;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .buy-btn:active {
+      transform: scale(0.95);
+    }
+    .buy-btn:hover {
+      box-shadow: 0 0 8px rgba(98, 126, 234, 0.5);
+    }
+    .buy-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .tab-bar {
+      display: flex;
+      background-color: #252525;
+      padding: 10px 0;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+      cursor: pointer;
+    }
+    .tab.active {
+      opacity: 1;
+      color: #627eea;
+      position: relative;
+    }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 3px;
+      background-color: #627eea;
+      border-radius: 3px;
+    }
+    .tab-content {
+      display: none;
+      padding: 10px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #627eea;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      z-index: 100;
+      animation: slideIn 0.3s, fadeOut 0.5s 2s forwards;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    @keyframes slideIn {
+      from { top: -50px; opacity: 0; }
+      to { top: 20px; opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .exchange-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .exchange-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background-color: #333;
+      border-radius: 8px;
+    }
+    .exchange-input-container {
+      position: relative;
+      margin: 10px 0;
+    }
+    .exchange-input {
+      width: 100%;
+      padding: 12px 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      background-color: #333;
+      color: white;
+      outline: none;
+    }
+    .exchange-input:focus {
+      box-shadow: 0 0 0 2px #627eea;
+    }
+    .exchange-currency {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #999;
+    }
+    .exchange-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .exchange-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .exchange-btn.sell {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      color: white;
+    }
+    .exchange-btn.sell:hover {
+      box-shadow: 0 0 10px rgba(98, 126, 234, 0.5);
+    }
+    .exchange-btn.max {
+      background-color: #333;
+      color: #627eea;
+    }
+    .exchange-btn.max:hover {
+      box-shadow: 0 0 10px rgba(51, 51, 51, 0.5);
+    }
+    .device-battery {
+      font-size: 12px;
+      color: #f0b90b;
+      margin-top: 5px;
+    }
+    .device-temp {
+      font-size: 12px;
+      color: red;
+      margin-top: 2px;
+    }
+    .charge-btn {
+      font-size: 12px;
+      color: white;
+      background-color: #627eea;
+      padding: 4px 8px;
+      border-radius: 10px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .charge-btn:disabled {
+      background-color: #333;
+      color: #666;
+      cursor: default;
+    }
+    .mining-status {
+      margin-top: 10px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    .mining-status.active {
+      color: #627eea;
+    }
+    .mining-status.inactive {
+      color: #aaa;
+    }
+    .electricity-section {
+      padding: 10px;
+      margin: 10px;
+      background-color: #252525;
+      border-radius: 12px;
+    }
+    .electricity-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .electricity-label {
+      font-size: 14px;
+    }
+    .electricity-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .electricity-warning {
+      color: #ff4757;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .pay-btn {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      width: 100%;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .pay-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+    .ad-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .ad-content {
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 90%;
+      text-align: center;
+    }
+    .ad-title {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #627eea;
+    }
+    .ad-text {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    .ad-reward {
+      color: #f0b90b;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .ad-btn {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: transform 0.2s;
+    }
+    .ad-btn:active {
+      transform: scale(0.95);
+    }
+    .ad-btn.skip {
+      background: #333;
+    }
+    .charge-all-btn {
+      background: linear-gradient(135deg, #627eea 0%, #7b5be6 100%);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+      transition: transform 0.2s;
+    }
+    .charge-all-btn:active {
+      transform: scale(0.95);
+    }
+    .charge-all-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Кнопки Сохранить / Сбросить -->
+  <div class="save-reset-buttons">
+    <button id="save-btn" class="save-btn">Сохранить</button>
+    <button id="reset-btn" class="reset-btn">Сбросить</button>
+  </div>
+  <div class="header">
+    <h1>Майнинг Ферма</h1>
+    <p>Зарабатывайте криптовалюту!</p>
+  </div>
+  <div class="stats">
+    <div class="stat-item">
+      <div class="stat-label">BTC</div>
+      <div class="stat-value" id="balance-btc">0.00000000 BTC</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">USD</div>
+      <div class="stat-value" id="usd-balance">$0.00</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Хэшрейт</div>
+      <div class="stat-value" id="hashrate">0 H/s</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Электричество</div>
+      <div class="stat-value" id="electricity-bill">$0.00</div>
+    </div>
+  </div>
+  <div class="device-section">
+    <div id="device-image" class="device-image"></div>
+    <div class="device-name" id="device-name">Моя ферма</div>
+    <div class="device-hashrate" id="device-hashrate">0 H/s</div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar" style="width: 100%"></div>
+    </div>
+    <div id="mining-status" class="mining-status inactive">Майнинг остановлен</div>
+    <div class="mining-controls">
+      <button id="start-mining" class="mining-btn">Старт</button>
+      <button id="stop-mining" class="mining-btn stop" disabled>Стоп</button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" data-tab="shop">Магазин</div>
+    <div class="tab" data-tab="devices">Устройства</div>
+    <div class="tab" data-tab="stats">Статистика</div>
+    <div class="tab" data-tab="electricity">Электричество</div>
+    <div class="tab" data-tab="exchange">Биржа</div>
+  </div>
+  <div class="tab-content active" id="shop-tab">
+    <div class="shop">
+      <h2>Оборудование</h2>
+      <h3 style="margin: 15px 0 10px; font-size: 16px; color: #627eea;">Смартфоны</h3>
+      <div class="shop-item">
+        <div class="shop-item-icon phone-2"></div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">Средний смартфон</div>
+          <div class="shop-item-desc">+5 H/s | Потребление: 0.5 кВт/ч (при зарядке)</div>
+        </div>
+        <div class="shop-item-price">$10</div>
+        <button class="buy-btn" data-cost="10" data-hashrate="5" data-device="phone-2" data-name="Средний смартфон" data-consumption="0.5">Купить</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon phone-3"></div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">Флагманский смартфон</div>
+          <div class="shop-item-desc">+20 H/s | Потребление: 1.2 кВт/ч (при зарядке)</div>
+        </div>
+        <div class="shop-item-price">$50</div>
+        <button class="buy-btn" data-cost="50" data-hashrate="20" data-device="phone-3" data-name="Флагманский смартфон" data-consumption="1.2">Купить</button>
+      </div>
+      <h3 style="margin: 15px 0 10px; font-size: 16px; color: #627eea;">Компьютеры</h3>
+      <div class="shop-item">
+        <div class="shop-item-icon pc"></div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">Базовый ПК</div>
+          <div class="shop-item-desc">+50 H/s | Потребление: 5 кВт/ч (всегда)</div>
+        </div>
+        <div class="shop-item-price">$200</div>
+        <button class="buy-btn" data-cost="200" data-hashrate="50" data-device="pc" data-name="Базовый ПК" data-consumption="5">Купить</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon pc"></div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">Игровой ПК</div>
+          <div class="shop-item-desc">+200 H/s | Потребление: 15 кВт/ч (всегда)</div>
+        </div>
+        <div class="shop-item-price">$1000</div>
+        <button class="buy-btn" data-cost="1000" data-hashrate="200" data-device="pc" data-name="Игровой ПК" data-consumption="15">Купить</button>
+      </div>
+      <h3 style="margin: 15px 0 10px; font-size: 16px; color: #627eea;">Фермы</h3>
+      <div class="shop-item">
+        <div class="shop-item-icon no-icon"></div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">Майнинг ферма</div>
+          <div class="shop-item-desc">+1000 H/s | Потребление: 50 кВт/ч (всегда)</div>
+        </div>
+        <div class="shop-item-price">$5000</div>
+        <button class="buy-btn" data-cost="5000" data-hashrate="1000" data-device="farm" data-name="Майнинг ферма" data-consumption="50">Купить</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-item-icon no-icon"></div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">Промышленная ферма</div>
+          <div class="shop-item-desc">+10,000 H/s | Потребление: 200 кВт/ч (всегда)</div>
+        </div>
+        <div class="shop-item-price">$25000</div>
+        <button class="buy-btn" data-cost="25000" data-hashrate="10000" data-device="farm" data-name="Промышленная ферма" data-consumption="200">Купить</button>
+      </div>
+    </div>
+  </div>
+  <div class="tab-content" id="devices-tab">
+    <div class="devices">
+      <h2>Мои устройства</h2>
+      <button id="charge-all-btn" class="charge-all-btn" disabled>Зарядить все телефоны</button>
+      <div id="devices-list"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="stats-tab">
+    <div class="shop">
+      <h2>Статистика</h2>
+      <div class="stat-item" style="margin-bottom: 10px;">
+        <div class="stat-label">Время майнинга</div>
+        <div class="stat-value" id="mining-time">00:00:00</div>
+      </div>
+      <div class="stat-item" style="margin-bottom: 10px;">
+        <div class="stat-label">Всего добыто</div>
+        <div class="stat-value" id="total-mined">0 BTC</div>
+      </div>
+      <div class="stat-item" style="margin-bottom: 10px;">
+        <div class="stat-label">Макс. хэшрейт</div>
+        <div class="stat-value" id="max-hashrate">0 H/s</div>
+      </div>
+      <div class="stat-item" style="margin-bottom: 10px;">
+        <div class="stat-label">Потреблено энергии</div>
+        <div class="stat-value" id="total-consumed">0 кВт·ч</div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-content" id="electricity-tab">
+    <div class="electricity-section">
+      <h2>Электричество</h2>
+      <div class="electricity-row">
+        <span class="electricity-label">Текущий счёт</span>
+        <span class="electricity-value" id="current-bill">$0.00</span>
+      </div>
+      <div class="electricity-row">
+        <span class="electricity-label">Тариф</span>
+        <span class="electricity-value">$0.15 за кВт·ч</span>
+      </div>
+      <div class="electricity-row">
+        <span class="electricity-label">Текущее потребление</span>
+        <span class="electricity-value" id="current-consumption">0 кВт·ч</span>
+      </div>
+      <div id="electricity-warning" class="electricity-warning" style="display: none;">
+        Внимание! У вас большая задолженность за электричество. Оплатите счёт для продолжения майнинга.
+      </div>
+      <button id="pay-electricity-btn" class="pay-btn" disabled>Оплатить</button>
+    </div>
+  </div>
+  <div class="tab-content" id="exchange-tab">
+    <div class="shop">
+      <h2>Биржа</h2>
+      <div class="exchange-container">
+        <div class="exchange-row">
+          <span class="exchange-label">Курс BTC</span>
+          <span class="exchange-value" id="btc-rate">$30,000</span>
+        </div>
+        <div class="exchange-row">
+          <span class="exchange-label">Доступно BTC</span>
+          <span class="exchange-value" id="exchange-btc">0.00000000 BTC</span>
+        </div>
+        <div class="exchange-input-container">
+          <input type="number" id="sell-btc" placeholder="Введите количество BTC" step="0.00000001" min="0" class="exchange-input">
+          <span class="exchange-currency">BTC</span>
+        </div>
+        <div class="exchange-row">
+          <span class="exchange-label">Вы получите</span>
+          <span class="exchange-value" id="exchange-amount">$0.00</span>
+        </div>
+        <div class="exchange-actions">
+          <button id="max-btn" class="exchange-btn max">MAX</button>
+          <button id="sell-btn" class="exchange-btn sell" disabled>Продать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- Контейнер для рекламы -->
+<div id="ad-container" class="ad-container" style="display: none;">
+  <div class="ad-content">
+    <div class="ad-title">Реклама</div>
+    <div id="video-ad"></div>
+    <div class="ad-text">Посмотрите рекламу и получите бонус!</div>
+    <div class="ad-reward" id="ad-reward-text">+$10</div>
+    <button id="watch-ad-btn" class="ad-btn">Смотреть рекламу</button>
+    <button id="skip-ad-btn" class="ad-btn skip">Пропустить</button>
+  </div>
+</div>
+
+<script>
+  let balance = 30; // Начальный баланс $30
+  let btcBalance = 0;
+  let totalMined = 0;
+  let maxHashrate = 0;
+  let isMining = false;
+  let miningInterval = null;
+  let miningStartTime = 0;
+  const btcRate = 30000;
+  let purchasedDevices = [];
+  let electricityBill = 0;
+  let totalConsumption = 0;
+  let currentConsumption = 0;
+  const electricityRate = 0.15; // $0.15 за кВт·ч
+  let electricityDebt = false;
+  let lastUpdateTime = Date.now();
+  let lastAdTime = 0;
+  let adInterval = null;
+  let ysdk = null;
+
+  // Инициализация Яндекс SDK
+  function initYandexSDK() {
+    YaGames.init()
+      .then(sdk => {
+        ysdk = sdk;
+        console.log('Yandex SDK initialized');
+        
+        // Показ рекламы при запуске
+        showAd();
+        
+        // Запуск периодической рекламы
+        scheduleNextAd();
+      })
+      .catch(err => {
+        console.error('Failed to load Yandex SDK', err);
+      });
+  }
+
+  // Показать рекламу
+  function showAd() {
+    if (!ysdk) {
+      console.log('Yandex SDK not loaded');
+      return;
+    }
+
+    const rewardAmount = Math.floor(Math.random() * 19) + 2; // $2-$20
+    document.getElementById('ad-reward-text').textContent = `+$${rewardAmount}`;
+    document.getElementById('ad-container').style.display = 'flex';
+
+    // Обработка кнопки просмотра рекламы
+    document.getElementById('watch-ad-btn').onclick = () => {
+      ysdk.adv.showRewardedVideo({
+        callbacks: {
+          onOpen: () => console.log('Ad opened'),
+          onClose: (wasShown) => {
+            document.getElementById('ad-container').style.display = 'none';
+            if (wasShown) {
+              balance += rewardAmount;
+              updateUI();
+              showNotification(`Вы получили $${rewardAmount} за просмотр рекламы!`);
+            }
+          },
+          onError: (err) => {
+            console.log('Ad error:', err);
+            document.getElementById('ad-container').style.display = 'none';
+          }
+        }
+      });
+    };
+
+    // Обработка кнопки пропуска
+    document.getElementById('skip-ad-btn').onclick = () => {
+      document.getElementById('ad-container').style.display = 'none';
+    };
+  }
+
+  // Запланировать следующую рекламу через 5-7 минут
+  function scheduleNextAd() {
+    if (adInterval) clearTimeout(adInterval);
+    const delay = (Math.random() * 2 + 5) * 60 * 1000; // 5-7 минут
+    adInterval = setTimeout(() => {
+      showAd();
+      scheduleNextAd();
+    }, delay);
+  }
+
+  function calculateTotalHashrate() {
+    return purchasedDevices.reduce((sum, dev) => sum + dev.hashrate, 0);
+  }
+
+  function getEffectiveHashrate() {
+    if (electricityDebt) return 0;
+    
+    return purchasedDevices.reduce((acc, dev) => {
+      if (dev.type === 'phone' && (dev.battery <= 0)) return acc;
+      return acc + dev.hashrate;
+    }, 0);
+  }
+
+  function calculateConsumption() {
+    const now = Date.now();
+    const deltaTime = (now - lastUpdateTime) / 1000; // в секундах
+    lastUpdateTime = now;
+
+    currentConsumption = purchasedDevices.reduce((sum, dev) => {
+      if (dev.type === 'phone' && dev.battery < 100) {
+        // Потребление при зарядке телефона
+        return sum + dev.consumption;
+      } else if (dev.type === 'pc' || dev.type === 'farm') {
+        // ПК и фермы потребляют всегда
+        return sum + dev.consumption;
+      }
+      return sum;
+    }, 0);
+    
+    // Добавляем потребление к счету (за прошедшее время)
+    if (currentConsumption > 0) {
+      const consumptionInKwH = (currentConsumption * deltaTime) / 3600;
+      electricityBill += consumptionInKwH * electricityRate;
+      totalConsumption += consumptionInKwH;
+    }
+    
+    updateElectricityUI();
+  }
+
+  function mine() {
+    const effectiveHashrate = getEffectiveHashrate();
+    const mined = effectiveHashrate / 10_000_000;
+    if (!isNaN(mined)) {
+      btcBalance += mined;
+      totalMined += mined;
+    }
+    reduceBattery();
+    calculateConsumption();
+    updateUI();
+  }
+
+  function reduceBattery() {
+    purchasedDevices.forEach(dev => {
+      if (dev.type === 'phone') {
+        if (dev.name === "Флагманский смартфон") {
+          dev.battery = Math.max(0, dev.battery - 0.03); // Медленнее разряжается
+        } else {
+          dev.battery = Math.max(0, dev.battery - 0.1); // Стандартный расход
+        }
+      }
+    });
+    updateDevices();
+  }
+
+  function chargeDevice(index) {
+    if (electricityDebt) {
+      showNotification("Сначала оплатите счёт за электричество!");
+      return;
+    }
+    
+    purchasedDevices[index].battery = 100;
+    updateDevices();
+    showNotification(`${purchasedDevices[index].name} заряжен`);
+    calculateConsumption();
+  }
+
+  // Функция для зарядки всех телефонов
+  function chargeAllPhones() {
+    if (electricityDebt) {
+      showNotification("Сначала оплатите счёт за электричество!");
+      return;
+    }
+    
+    let chargedCount = 0;
+    purchasedDevices.forEach(dev => {
+      if (dev.type === 'phone' && dev.battery < 100) {
+        dev.battery = 100;
+        chargedCount++;
+      }
+    });
+    
+    if (chargedCount > 0) {
+      updateDevices();
+      showNotification(`Заряжено ${chargedCount} телефонов`);
+      calculateConsumption();
+    } else {
+      showNotification('Все телефоны уже заряжены');
+    }
+  }
+
+  function startMining() {
+    if (electricityDebt) {
+      showNotification("Оплатите счёт за электричество для продолжения майнинга!");
+      return;
+    }
+    
+    if (isMining) return;
+    isMining = true;
+    if (miningStartTime === 0) miningStartTime = Math.floor(Date.now() / 1000);
+    miningInterval = setInterval(mine, 1000);
+    document.getElementById('start-mining').disabled = true;
+    document.getElementById('stop-mining').disabled = false;
+    document.getElementById('mining-status').textContent = 'Майнинг активен';
+    document.getElementById('mining-status').className = 'mining-status active';
+    showNotification('Майнинг запущен');
+    calculateConsumption();
+  }
+
+  function stopMining() {
+    if (!isMining) return;
+    isMining = false;
+    clearInterval(miningInterval);
+    document.getElementById('start-mining').disabled = false;
+    document.getElementById('stop-mining').disabled = true;
+    document.getElementById('mining-status').textContent = 'Майнинг остановлен';
+    document.getElementById('mining-status').className = 'mining-status inactive';
+    showNotification('Майнинг остановлен');
+    calculateConsumption();
+  }
+
+  function payElectricityBill() {
+    if (electricityBill <= 0) return;
+    
+    if (balance >= electricityBill) {
+      balance -= electricityBill;
+      electricityBill = 0;
+      electricityDebt = false;
+      showNotification(`Счёт за электричество оплачен!`);
+      updateElectricityUI();
+      updateUI();
+      
+      // Показываем/скрываем предупреждение
+      document.getElementById('electricity-warning').style.display = 'none';
+      
+      // Если майнинг был остановлен из-за долга, предлагаем продолжить
+      if (!isMining && getEffectiveHashrate() > 0) {
+        if (confirm('Оплата прошла успешно! Продолжить майнинг?')) {
+          startMining();
+        }
+      }
+    } else {
+      showNotification('Недостаточно средств для оплаты!');
+    }
+  }
+
+  function updateElectricityUI() {
+    document.getElementById('electricity-bill').textContent = `$${electricityBill.toFixed(2)}`;
+    document.getElementById('current-bill').textContent = `$${electricityBill.toFixed(2)}`;
+    document.getElementById('current-consumption').textContent = `${currentConsumption.toFixed(2)} кВт·ч`;
+    document.getElementById('total-consumed').textContent = `${totalConsumption.toFixed(2)} кВт·ч`;
+    
+    // Обновляем кнопку оплаты
+    const payBtn = document.getElementById('pay-electricity-btn');
+    payBtn.disabled = electricityBill <= 0;
+    payBtn.textContent = electricityBill > 0 ? `Оплатить $${electricityBill.toFixed(2)}` : 'Нет задолженности';
+    
+    // Проверяем задолженность (если счет больше $50)
+    if (electricityBill > 50 && !electricityDebt) {
+      electricityDebt = true;
+      document.getElementById('electricity-warning').style.display = 'block';
+      showNotification('Внимание! Большая задолженность за электричество!');
+      if (isMining) {
+        stopMining();
+      }
+    }
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem('mining-game');
+    if (saved) {
+      const data = JSON.parse(saved);
+      balance = parseFloat(data.balance) || 30;
+      btcBalance = parseFloat(data.btcBalance) || 0;
+      totalMined = parseFloat(data.totalMined) || 0;
+      maxHashrate = parseInt(data.maxHashrate) || 0;
+      miningStartTime = data.miningStartTime || 0;
+      purchasedDevices = data.purchasedDevices || [];
+      electricityBill = parseFloat(data.electricityBill) || 0;
+      totalConsumption = parseFloat(data.totalConsumption) || 0;
+      electricityDebt = data.electricityDebt || false;
+    } else {
+      purchasedDevices = [];
+    }
+  }
+
+  function saveGame() {
+    const data = {
+      balance,
+      btcBalance,
+      totalMined,
+      maxHashrate,
+      miningStartTime,
+      purchasedDevices,
+      electricityBill,
+      totalConsumption,
+      electricityDebt
+    };
+    localStorage.setItem('mining-game', JSON.stringify(data));
+    showNotification('Игра сохранена!');
+  }
+
+  function resetGame() {
+    if (confirm('Вы уверены? Прогресс будет сброшен.')) {
+      balance = 30;
+      btcBalance = 0;
+      totalMined = 0;
+      maxHashrate = 0;
+      miningStartTime = 0;
+      purchasedDevices = [];
+      electricityBill = 0;
+      totalConsumption = 0;
+      electricityDebt = false;
+      lastUpdateTime = Date.now();
+      if (isMining) stopMining();
+      updateUI();
+      updateDevices();
+      updateElectricityUI();
+      showNotification('Прогресс сброшен!');
+    }
+  }
+
+  function updateUI() {
+    const totalHashrate = calculateTotalHashrate();
+    maxHashrate = Math.max(maxHashrate, totalHashrate);
+    document.getElementById('balance-btc').textContent = `${btcBalance.toFixed(8)} BTC`;
+    document.getElementById('usd-balance').textContent = `$${balance.toFixed(2)}`;
+    document.getElementById('hashrate').textContent = `${totalHashrate} H/s`;
+    document.getElementById('device-hashrate').textContent = `${totalHashrate} H/s`;
+    document.getElementById('total-mined').textContent = `${totalMined.toFixed(8)} BTC`;
+    document.getElementById('max-hashrate').textContent = `${maxHashrate} H/s`;
+    document.getElementById('exchange-btc').textContent = `${btcBalance.toFixed(8)} BTC`;
+    document.getElementById('btc-rate').textContent = `$${btcRate.toLocaleString()}`;
+    document.querySelectorAll('.buy-btn').forEach(button => {
+      button.disabled = balance < parseFloat(button.getAttribute('data-cost'));
+    });
+    updateElectricityUI();
+  }
+
+  function updateDevices() {
+    const devicesList = document.getElementById('devices-list');
+    devicesList.innerHTML = '';
+    
+    // Проверяем, есть ли телефоны, которые нужно зарядить
+    const hasPhonesToCharge = purchasedDevices.some(dev => dev.type === 'phone' && dev.battery < 100);
+    document.getElementById('charge-all-btn').disabled = !hasPhonesToCharge;
+    
+    if (purchasedDevices.length === 0) {
+      devicesList.innerHTML = '<p style="text-align:center;opacity:0.7;">Нет устройств</p>';
+      return;
+    }
+    
+    purchasedDevices.forEach((device, index) => {
+      const item = document.createElement('div');
+      item.className = 'device-item';
+      let extraInfo = '';
+      if (device.type === 'phone') {
+        extraInfo = `
+          <div class="device-battery">🔋 ${device.battery.toFixed(1)}%</div>
+          <button class="charge-btn" ${device.battery >= 100 ? 'disabled' : ''} data-index="${index}">Зарядить</button>`;
+      } else if (device.type === 'pc' || device.type === 'farm') {
+        extraInfo = `<div class="device-temp">🔥 ${Math.floor(Math.random() * 40 + 30)}°C</div>`;
+      }
+      item.innerHTML = `
+        <div class="device-icon ${device.icon}"></div>
+        <div class="device-info">
+          <div class="device-name">${device.name}</div>
+          <div class="device-hashrate">+${device.hashrate} H/s | ${device.consumption} кВт·ч</div>
+          ${extraInfo}
+        </div>`;
+      devicesList.appendChild(item);
+    });
+    
+    document.querySelectorAll('.charge-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
+        chargeDevice(index);
+      });
+    });
+  }
+
+  function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2500);
+  }
+
+  function updateExchangeAmount() {
+    const amount = parseFloat(document.getElementById('sell-btc').value);
+    const exchangeAmountEl = document.getElementById('exchange-amount');
+    const sellBtn = document.getElementById('sell-btn');
+    if (!isNaN(amount) && amount > 0 && amount <= btcBalance) {
+      exchangeAmountEl.textContent = `$${(amount * btcRate).toFixed(2)}`;
+      sellBtn.disabled = false;
+    } else {
+      exchangeAmountEl.textContent = "$0.00";
+      sellBtn.disabled = true;
+    }
+  }
+
+  function setMaxAmount() {
+    const amount = btcBalance;
+    if (amount > 0) {
+      document.getElementById('sell-btc').value = amount.toFixed(8);
+      updateExchangeAmount();
+    }
+  }
+
+  function sellBitcoin() {
+    const amount = parseFloat(document.getElementById('sell-btc').value);
+    if (!isNaN(amount) && amount > 0 && amount <= btcBalance) {
+      btcBalance -= amount;
+      balance += amount * btcRate;
+      document.getElementById('sell-btc').value = '';
+      document.getElementById('exchange-amount').textContent = "$0.00";
+      document.getElementById('sell-btn').disabled = true;
+      showNotification(`Продано ${amount.toFixed(8)} BTC за $${(amount * btcRate).toFixed(2)}`);
+      updateUI();
+    }
+  }
+
+  function updateStats() {
+    if (miningStartTime > 0) {
+      const seconds = Math.floor(Date.now() / 1000 - miningStartTime);
+      const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      document.getElementById('mining-time').textContent = `${hours}:${minutes}:${secs}`;
+    }
+  }
+
+  function initGame() {
+    loadGame();
+    lastUpdateTime = Date.now();
+    
+    // Инициализация Яндекс SDK
+    initYandexSDK();
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+        if (tab.dataset.tab === 'devices') updateDevices();
+        if (tab.dataset.tab === 'electricity') updateElectricityUI();
+      });
+    });
+    
+    document.querySelectorAll('.buy-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const cost = parseFloat(button.getAttribute('data-cost'));
+        const hashrate = parseInt(button.getAttribute('data-hashrate'));
+        const deviceType = button.getAttribute('data-device');
+        const deviceName = button.getAttribute('data-name');
+        const consumption = parseFloat(button.getAttribute('data-consumption')) || 0;
+        if (balance >= cost) {
+          balance -= cost;
+          let type = 'other';
+          if (deviceType.startsWith('phone')) type = 'phone';
+          else if (deviceType === 'pc') type = 'pc';
+          else if (deviceType === 'farm') type = 'farm';
+          purchasedDevices.push({
+            name: deviceName,
+            hashrate: hashrate,
+            icon: deviceType,
+            battery: deviceType.startsWith('phone') ? 100 : undefined,
+            type: type,
+            consumption: consumption
+          });
+          showNotification(`Куплено: ${deviceName}`);
+          updateUI();
+          updateDevices();
+          calculateConsumption();
+        }
+      });
+    });
+    
+    document.getElementById('start-mining').addEventListener('click', startMining);
+    document.getElementById('stop-mining').addEventListener('click', stopMining);
+    document.getElementById('save-btn').addEventListener('click', saveGame);
+    document.getElementById('reset-btn').addEventListener('click', resetGame);
+    document.getElementById('sell-btc').addEventListener('input', updateExchangeAmount);
+    document.getElementById('max-btn').addEventListener('click', setMaxAmount);
+    document.getElementById('sell-btn').addEventListener('click', sellBitcoin);
+    document.getElementById('pay-electricity-btn').addEventListener('click', payElectricityBill);
+    document.getElementById('charge-all-btn').addEventListener('click', chargeAllPhones);
+    
+    updateUI();
+    updateDevices();
+    updateElectricityUI();
+    updateStats();
+    
+    setInterval(() => {
+      updateStats();
+      calculateConsumption();
+    }, 1000);
+  }
+
+  initGame();
+</script>
+</body>
+        </html>
